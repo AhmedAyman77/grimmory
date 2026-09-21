@@ -2805,6 +2805,23 @@
     },
     "fetchOptions": {
       "startRefresh": "Start Refresh"
+    },
+    "providers": {
+      "openLibrary": "Open Library",
+      "amazon": "Amazon",
+      "google": "Google Books",
+      "goodReads": "Goodreads",
+      "hardcover": "Hardcover",
+      "comicvine": "Comic Vine",
+      "douban": "Douban",
+      "lubimyczytac": "Lubimyczytać",
+      "ranobedb": "RanobeDB",
+      "audible": "Audible",
+      "appleBooks": "Apple Books"
+    },
+    "providerFields": {
+      "asin": "Amazon ASIN",
+      "hardcoverBookId": "Hardcover Book ID"
     }
   },
   "notebook": {
