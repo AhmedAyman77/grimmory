@@ -8,6 +8,7 @@ import org.booklore.model.dto.BookMetadata;
 import org.booklore.model.dto.BookRecommendationLite;
 import org.booklore.model.dto.ComicMetadata;
 import org.booklore.model.entity.BookEntity;
+import org.booklore.model.entity.BookMetadataEntity;
 import org.booklore.repository.BookRepository;
 import org.booklore.repository.UserContentRestrictionRepository;
 import org.booklore.security.policy.ContentRestrictionSpecification;
@@ -176,19 +177,20 @@ public class BookQueryService {
         }
 
         if (stripForListView) {
-            stripFieldsForListView(dto);
+            stripFieldsForListView(dto, bookEntity);
         }
 
         return dto;
     }
 
-    private void stripFieldsForListView(Book dto) {
+    private void stripFieldsForListView(Book dto, BookEntity bookEntity) {
         dto.setLibraryPath(null);
 
         BookMetadata m = dto.getMetadata();
         if (m != null) {
             // Compute allMetadataLocked before stripping lock flags
-            m.setAllMetadataLocked(computeAllMetadataLocked(m));
+            BookMetadataEntity metadataEntity = bookEntity.getMetadata();
+            m.setAllMetadataLocked(metadataEntity != null && metadataEntity.areAllFieldsLocked());
 
             // Strip lock flags
             m.setTitleLocked(null);
@@ -201,7 +203,6 @@ public class BookQueryService {
             m.setSeriesTotalLocked(null);
             m.setIsbn13Locked(null);
             m.setIsbn10Locked(null);
-            m.setOpenlibraryIdLocked(null);
             m.setAsinLocked(null);
             m.setGoodreadsIdLocked(null);
             m.setComicvineIdLocked(null);
@@ -226,9 +227,6 @@ public class BookQueryService {
             m.setAudibleIdLocked(null);
             m.setAudibleRatingLocked(null);
             m.setAudibleReviewCountLocked(null);
-            m.setApplebooksIdLocked(null);
-            m.setApplebooksRatingLocked(null);
-            m.setApplebooksReviewCountLocked(null);
             m.setExternalUrlLocked(null);
             m.setCoverLocked(null);
             m.setAudiobookCoverLocked(null);
@@ -243,7 +241,6 @@ public class BookQueryService {
             m.setContentRatingLocked(null);
 
             // Strip external IDs
-            m.setOpenlibraryId(null);
             m.setAsin(null);
             m.setGoodreadsId(null);
             m.setComicvineId(null);
@@ -254,9 +251,9 @@ public class BookQueryService {
             m.setRanobedbId(null);
             m.setAudibleId(null);
             m.setDoubanId(null);
-            m.setApplebooksId(null);
 
             // Strip unused detail fields
+            m.setSubtitle(null);
             m.setSeriesTotal(null);
             m.setAbridged(null);
             m.setExternalUrl(null);
@@ -273,8 +270,6 @@ public class BookQueryService {
             m.setAudibleRating(null);
             m.setAudibleReviewCount(null);
             m.setLubimyczytacRating(null);
-            m.setApplebooksRating(null);
-            m.setApplebooksReviewCount(null);
 
             // Strip empty metadata collections
             if (m.getMoods() != null && m.getMoods().isEmpty()) m.setMoods(null);
@@ -332,59 +327,5 @@ public class BookQueryService {
         // Strip empty book-level collections
         if (dto.getAlternativeFormats() != null && dto.getAlternativeFormats().isEmpty()) dto.setAlternativeFormats(null);
         if (dto.getSupplementaryFiles() != null && dto.getSupplementaryFiles().isEmpty()) dto.setSupplementaryFiles(null);
-    }
-
-    private boolean computeAllMetadataLocked(BookMetadata m) {
-        Boolean[] bookLocks = {
-                m.getTitleLocked(), m.getSubtitleLocked(), m.getPublisherLocked(),
-                m.getPublishedDateLocked(), m.getDescriptionLocked(), m.getSeriesNameLocked(),
-                m.getSeriesNumberLocked(), m.getSeriesTotalLocked(), m.getIsbn13Locked(),
-                m.getIsbn10Locked(), m.getOpenlibraryIdLocked(), m.getAsinLocked(), m.getGoodreadsIdLocked(),
-                m.getComicvineIdLocked(), m.getHardcoverIdLocked(), m.getHardcoverBookIdLocked(),
-                m.getGoogleIdLocked(), m.getPageCountLocked(),
-                m.getLanguageLocked(), m.getAmazonRatingLocked(), m.getAmazonReviewCountLocked(),
-                m.getGoodreadsRatingLocked(), m.getGoodreadsReviewCountLocked(),
-                m.getHardcoverRatingLocked(), m.getHardcoverReviewCountLocked(),
-                m.getLubimyczytacIdLocked(), m.getLubimyczytacRatingLocked(),
-                m.getRanobedbIdLocked(), m.getRanobedbRatingLocked(),
-                m.getAudibleIdLocked(), m.getAudibleRatingLocked(), m.getAudibleReviewCountLocked(),
-                m.getCoverLocked(), m.getAudiobookCoverLocked(),
-                m.getAuthorsLocked(), m.getCategoriesLocked(), m.getMoodsLocked(),
-                m.getTagsLocked(), m.getReviewsLocked(), m.getNarratorLocked(),
-                m.getAbridgedLocked(), m.getAgeRatingLocked(), m.getContentRatingLocked()
-        };
-
-        boolean hasAnyLock = false;
-        for (Boolean lock : bookLocks) {
-            if (Boolean.TRUE.equals(lock)) {
-                hasAnyLock = true;
-            } else {
-                return false;
-            }
-        }
-
-        ComicMetadata cm = m.getComicMetadata();
-        if (cm != null && !isComicFullyLocked(cm)) {
-            return false;
-        }
-
-        return hasAnyLock;
-    }
-
-    private boolean isComicFullyLocked(ComicMetadata cm) {
-        Boolean[] comicLocks = {
-                cm.getIssueNumberLocked(), cm.getVolumeNameLocked(), cm.getVolumeNumberLocked(),
-                cm.getStoryArcLocked(), cm.getStoryArcNumberLocked(), cm.getAlternateSeriesLocked(),
-                cm.getAlternateIssueLocked(), cm.getImprintLocked(), cm.getFormatLocked(),
-                cm.getBlackAndWhiteLocked(), cm.getMangaLocked(), cm.getReadingDirectionLocked(),
-                cm.getWebLinkLocked(), cm.getNotesLocked(), cm.getCreatorsLocked(),
-                cm.getPencillersLocked(), cm.getInkersLocked(), cm.getColoristsLocked(),
-                cm.getLetterersLocked(), cm.getCoverArtistsLocked(), cm.getEditorsLocked(),
-                cm.getCharactersLocked(), cm.getTeamsLocked(), cm.getLocationsLocked()
-        };
-        for (Boolean lock : comicLocks) {
-            if (!Boolean.TRUE.equals(lock)) return false;
-        }
-        return true;
     }
 }
