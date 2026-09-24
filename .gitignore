@@ -38,7 +38,6 @@ out/
 /.nb-gradle/
 
 ### VS Code ###
-.vscode/
 local/
 local-scripts/
 
@@ -57,3 +56,4 @@ backend/src/main/resources/application-local.yaml
 /.pnpm-store/
 /.angular/
 .worktrees/
+config.bat
